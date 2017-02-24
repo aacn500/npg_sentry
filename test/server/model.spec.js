@@ -5,6 +5,7 @@ const child = require('child_process');
 const decache = require('decache');
 const moment = require('moment');
 const MongoClient = require('mongodb').MongoClient;
+const Promise = require('bluebird');
 const fse = require('fs-extra');
 const tmp = require('tmp');
 
@@ -41,7 +42,8 @@ beforeAll(function(done) {
   let out = child.execSync(command);
   console.log(`MongoDB daemon started: ${out}`);
   child.execSync('./test/scripts/wait-for-it.sh -q -h 127.0.0.1 -p 27017');
-  p_db = MongoClient.connect('mongodb://localhost:27017/test');
+  p_db = MongoClient.connect('mongodb://localhost:27017/test',
+          {promiseLibrary: Promise});
   p_db.then(done);
 }, 25000);
 
