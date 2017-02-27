@@ -17,6 +17,7 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const express = require('express');
 const helmet = require('helmet');
+const MongoError = require('mongodb').MongoError;
 
 const model = require('./lib/model');
 
@@ -124,6 +125,11 @@ app.use(function(req, res) {
       {err: 'Not Found', statusCode});
 });
 
+let connIsDeadErrs = [
+  /^server instance pool was destroyed$/i,
+  /^Topology was destroyed$/i,
+  /^failed to connect to server \[.*\] on first connect$/i
+];
 // 'next' is unused, but required for express to see this
 // as error-handling middleware
 //
@@ -137,7 +143,12 @@ app.use(function(err, req, res, next) {
     status: statusCode,
     err: 'Internal server error'
   });
+  if (err instanceof MongoError && connIsDeadErrs.some(err.message.match)) {
+    logger.error('DB connection has died. Server closing...');
+    serv.close(process.exit);
+  }
 });
 
+serv.timeout = 5000;
 serv.listen(port);
 logger.info(`express started on port ${port}`);
