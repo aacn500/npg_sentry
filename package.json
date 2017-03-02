@@ -13,7 +13,8 @@
   "main": "app.js",
   "scripts": {
     "test": "grunt test",
-    "start": "node app.js"
+    "start": "node app.js",
+    "prepublish": "bower install"
   },
   "author": "@aacn500",
   "license": "GPL-3.0",
@@ -22,13 +23,14 @@
     "config-chain": "1.1.x",
     "ejs": "2.5.x",
     "express": "4.14.x",
-    "log4js": "1.1.x",
     "helmet": "3.4.x",
+    "log4js": "1.1.x",
     "moment": "2.17.x",
     "mongodb": "2.2.x",
     "node-getopt": "0.2.3"
   },
   "devDependencies": {
+    "bower": "1.8.x",
     "decache": "4.1.0",
     "fs-extra": "2.0.x",
     "grunt": "1.0.x",
