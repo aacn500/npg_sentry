@@ -135,8 +135,9 @@ describe('model', function() {
           expect(doc.user).toBe(user);
           expect(doc.token).toMatch(/^[a-zA-Z0-9_-]{32}$/gm);
           expect(doc.status).toBe(constants.TOKEN_STATUS_VALID);
-          expect(moment(doc.issueTime).isValid()).toBe(true);
-          expect(doc.creationReason).toBe('test creation');
+          expect(moment(doc.hist[0].time)
+            .isBetween(moment().subtract(5, 'seconds'), moment())).toBe(true);
+          expect(doc.hist[0].reason).toBe('test creation');
           expect(moment(doc.expiryTime).isValid()).toBe(true);
           expect(moment(doc.expiryTime)
             .isBetween(moment().add(7, 'days').subtract(5, 'seconds'), moment().add(7, 'days'))).toBe(true);
@@ -148,8 +149,9 @@ describe('model', function() {
           expect(doc.user).toBe(user);
           expect(doc.token).toMatch(/^[a-zA-Z0-9_-]{32}$/gm);
           expect(doc.status).toBe(constants.TOKEN_STATUS_VALID);
-          expect(moment(doc.issueTime).isValid()).toBe(true);
-          expect(doc.creationReason).toBe('test creation');
+          expect(moment(doc.hist[0].time)
+            .isBetween(moment().subtract(5, 'seconds'), moment())).toBe(true);
+          expect(doc.hist[0].reason).toBe('test creation');
           expect(moment(doc.expiryTime).isValid()).toBe(true);
           expect(moment(doc.expiryTime)
             .isBetween(moment().add(7, 'days').subtract(5, 'seconds'), moment().add(7, 'days'))).toBe(true);
@@ -201,8 +203,10 @@ describe('model', function() {
 
         let p_insertion = p_collection.then(function(collection) {
           return collection.insertOne({
-            user, token, status: constants.TOKEN_STATUS_VALID
-          });
+            user, token, status: constants.TOKEN_STATUS_VALID, hist: [
+              {time: moment().format(), reason: 'insertion to test revokeToken'},
+              {time: moment().format(), reason: 'Test revocation'}
+          ]});
         });
 
         let p_revoke = p_insertion.then(function() {
@@ -224,6 +228,10 @@ describe('model', function() {
           expect(doc.user).toBe(user);
           expect(doc.token).toBe(token);
           expect(doc.status).toBe(constants.TOKEN_STATUS_REVOKED);
+          // expect token revocation to be second element of list
+          expect(moment(doc.hist[1].time)
+            .isBetween(moment().subtract(5, 'seconds'), moment())).toBe(true);
+          expect(doc.hist[1].reason).toBe('Test revocation');
         }).then(done, done.fail);
       });
 

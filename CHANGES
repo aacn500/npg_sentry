@@ -1,4 +1,5 @@
 
+ - all changes to token stored in single array of updates
  - ssl defaults to on
  - new option --sslca
  - clients must present a valid certificate, signed by passed CA
