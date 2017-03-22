@@ -129,33 +129,29 @@ describe('model', function() {
           return cursor.next();
         });
 
-        let p_insertTest = p_insert.then(function(doc) {
-          // test document returned by createToken
+        let test_doc = function(doc) {
           expect(doc).toBeDefined();
           expect(doc.user).toBe(user);
           expect(doc.token).toMatch(/^[a-zA-Z0-9_-]{32}$/gm);
           expect(doc.status).toBe(constants.TOKEN_STATUS_VALID);
-          expect(moment(doc.hist[0].time)
-            .isBetween(moment().subtract(5, 'seconds'), moment())).toBe(true);
-          expect(doc.hist[0].reason).toBe('test creation');
           expect(moment(doc.expiryTime).isValid()).toBe(true);
           expect(moment(doc.expiryTime)
             .isBetween(moment().add(7, 'days').subtract(5, 'seconds'), moment().add(7, 'days'))).toBe(true);
-        });
+          // hist record
+          expect(doc.hist).toBeDefined();
+          expect(doc.hist.length).toBe(1);
+          let hist = doc.hist[0];
+          expect(moment(hist.time)
+            .isBetween(moment().subtract(5, 'seconds'), moment())).toBe(true);
+          expect(hist.operating_user).toBe(user);
+          expect(hist.reason).toBe('test creation');
+        };
 
-        let p_docExpectation = p_doc.then(function(doc) {
-          // test document inserted into database
-          expect(doc).toBeDefined();
-          expect(doc.user).toBe(user);
-          expect(doc.token).toMatch(/^[a-zA-Z0-9_-]{32}$/gm);
-          expect(doc.status).toBe(constants.TOKEN_STATUS_VALID);
-          expect(moment(doc.hist[0].time)
-            .isBetween(moment().subtract(5, 'seconds'), moment())).toBe(true);
-          expect(doc.hist[0].reason).toBe('test creation');
-          expect(moment(doc.expiryTime).isValid()).toBe(true);
-          expect(moment(doc.expiryTime)
-            .isBetween(moment().add(7, 'days').subtract(5, 'seconds'), moment().add(7, 'days'))).toBe(true);
-        });
+        // test document returned by createToken
+        let p_insertTest = p_insert.then(test_doc);
+
+        // test document inserted into database
+        let p_docExpectation = p_doc.then(test_doc);
 
         Promise.all([p_countExpectation, p_docExpectation, p_insertTest])
         .then(done, done.fail);
@@ -204,8 +200,7 @@ describe('model', function() {
         let p_insertion = p_collection.then(function(collection) {
           return collection.insertOne({
             user, token, status: constants.TOKEN_STATUS_VALID, hist: [
-              {time: moment().format(), reason: 'insertion to test revokeToken'},
-              {time: moment().format(), reason: 'Test revocation'}
+              {time: moment().format(), reason: 'insertion to test revokeToken'}
           ]});
         });
 
@@ -229,9 +224,13 @@ describe('model', function() {
           expect(doc.token).toBe(token);
           expect(doc.status).toBe(constants.TOKEN_STATUS_REVOKED);
           // expect token revocation to be second element of list
-          expect(moment(doc.hist[1].time)
+          expect(doc.hist).toBeDefined();
+          expect(doc.hist.length).toBe(2);
+          let hist = doc.hist[1];
+          expect(moment(hist.time)
             .isBetween(moment().subtract(5, 'seconds'), moment())).toBe(true);
-          expect(doc.hist[1].reason).toBe('Test revocation');
+          expect(hist.operating_user).toBe(user);
+          expect(hist.reason).toBe('Test revocation');
         }).then(done, done.fail);
       });
 
